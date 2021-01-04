@@ -1,0 +1,44 @@
+version: '3'
+ 
+services:
+    api_img_1:
+        container_name: ${COMPOSE_PROJECT_NAME}_api_con_1
+        build: ./api/1
+        expose:
+            - ${TOMCAT_EXPOSED_PORT}
+        environment:
+            - DEMO_INSTANCE_NAME=api_con_1
+        networks:
+            public_net:
+                ipv4_address: ${API_1_IP}
+    api_img_2:
+        container_name: ${COMPOSE_PROJECT_NAME}_api_con_2
+        build: ./api/2
+        expose:
+            - ${TOMCAT_EXPOSED_PORT}
+        environment:
+            - DEMO_INSTANCE_NAME=api_con_2
+        networks:
+            public_net:
+                ipv4_address: ${API_2_IP}
+    haproxy_img:
+        build: ./haproxy
+        ports:
+            - 80:80
+            - ${TOMCAT_EXPOSED_PORT}:${TOMCAT_EXPOSED_PORT}
+        expose:
+            - 80
+        networks:
+            public_net:
+                ipv4_address: ${HA_PROXY_IP}
+        environment:
+            - API_1_IP=${API_1_IP}
+            - API_2_IP=${API_2_IP}
+            - TOMCAT_EXPOSED_PORT=${TOMCAT_EXPOSED_PORT}
+networks:
+    public_net:
+        driver: bridge
+        ipam:
+            driver: default
+            config:
+                - subnet: ${NETWORK_SUBNET}

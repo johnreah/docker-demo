@@ -1,0 +1,168 @@
+#############################################################################
+# Stack to create a docker swarm. Requirements:
+#   single AZ
+#   single subnet
+#   one public-facing IP (bastion host only)
+#   one bastion host
+#   3 x docker hosts
+#   security group for SSH in
+#   security group for anything outbound
+#############################################################################
+
+#Parameters:
+#  SecurityGroupDescription:
+#    Description: Security Group Description
+#    Type: String
+
+Resources:
+  DockerVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/24
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref DockerVPC
+      
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref DockerVPC
+      
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+      
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref DockerVPC
+      CidrBlock: 192.168.0.0/24
+      MapPublicIpOnLaunch: true
+      
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: tcp
+        ToPort: 22
+      VpcId: !Ref DockerVPC
+      
+  BastionHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0e80a462ede03e653
+      InstanceType: t2.micro
+      KeyName: docker-vpc
+      SecurityGroupIds:
+      - !GetAtt DockerVPC.DefaultSecurityGroup
+      - !Ref SSHSecurityGroup
+      SubnetId: !Ref PublicSubnet
+      #DependsOn: DockerHost1, DockerHost2, DockerHost3
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -ex
+            echo ${DockerHost1.PrivateIp} host1 >> /etc/hosts
+            echo ${DockerHost2.PrivateIp} host2 >> /etc/hosts
+            echo ${DockerHost3.PrivateIp} host3 >> /etc/hosts
+            yum update -y
+            yum install -y htop
+            yum install -y httpd-tools
+            amazon-linux-extras install -y docker
+            systemctl enable docker
+            service docker start
+            usermod -a -G docker ec2-user
+
+  PublicIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      InstanceId: !Ref BastionHost
+      
+  DockerHost1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0e80a462ede03e653
+      InstanceType: t2.micro
+      KeyName: docker-vpc
+      SecurityGroupIds:
+      - !GetAtt DockerVPC.DefaultSecurityGroup
+      SubnetId: !Ref PublicSubnet
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -ex
+            yum update -y
+            yum install -y htop
+            amazon-linux-extras install -y docker
+            systemctl enable docker
+            service docker start
+            usermod -a -G docker ec2-user
+
+  DockerHost2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0e80a462ede03e653
+      InstanceType: t2.micro
+      KeyName: docker-vpc
+      SecurityGroupIds:
+      - !GetAtt DockerVPC.DefaultSecurityGroup
+      SubnetId: !Ref PublicSubnet
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -ex
+            yum update -y
+            yum install -y htop
+            amazon-linux-extras install -y docker
+            systemctl enable docker
+            service docker start
+            usermod -a -G docker ec2-user
+
+  DockerHost3:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0e80a462ede03e653
+      InstanceType: t2.micro
+      KeyName: docker-vpc
+      SecurityGroupIds:
+      - !GetAtt DockerVPC.DefaultSecurityGroup
+      SubnetId: !Ref PublicSubnet
+      UserData:
+        Fn::Base64:
+          !Sub |
+            #!/bin/bash -ex
+            yum update -y
+            yum install -y htop
+            amazon-linux-extras install -y docker
+            systemctl enable docker
+            service docker start
+            usermod -a -G docker ec2-user
+
+Outputs:
+  BastionHostPublicIP:
+    Description: Public IP address of bastion host in public subnet
+    Value: !Ref PublicIP
+    Export:
+      Name: BastionHostPublicIP
+    

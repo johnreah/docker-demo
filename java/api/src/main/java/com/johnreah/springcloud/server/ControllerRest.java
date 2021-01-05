@@ -18,10 +18,11 @@ public class ControllerRest {
     @GetMapping("/info")
     public Resource getInfo(HttpServletRequest httpServletRequest) throws UnknownHostException, SocketException {
         Resource resource = Resource.getInfo();
-        resource.setIpAddress(Config.getIpAddress());
-        resource.setPort(httpServletRequest.getLocalPort());
+        resource.setServerHostName(Config.getServerHostName());
+        resource.setServerIpAddress(Config.getServerIpAddress());
+        resource.setRequestPort(httpServletRequest.getLocalPort());
         resource.setRequestNumber(requestsServed.addAndGet(1));
-        log.debug("Address {}:{} | Request {} | CreatedAt {}", resource.getIpAddress(), resource.getPort(), resource.getRequestNumber(), resource.getResourceCreatedAt());
+        log.debug("Address {}:{} | Request {} | CreatedAt {}", resource.getServerIpAddress(), resource.getRequestPort(), resource.getRequestNumber(), resource.getResourceCreatedAt());
         return resource;
     }
 

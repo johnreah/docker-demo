@@ -1,6 +1,5 @@
 package com.johnreah.springcloud.server;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.trace.http.HttpTraceRepository;
 import org.springframework.boot.actuate.trace.http.InMemoryHttpTraceRepository;
 import org.springframework.context.annotation.Bean;
@@ -14,12 +13,19 @@ import java.net.UnknownHostException;
 @Configuration
 public class Config {
 
-    private static String ipAddress;
+    private static String serverHostName;
+    private static String serverIpAddress;
 
     public Config() {
+        try {
+            serverHostName = InetAddress.getLocalHost().getCanonicalHostName();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+
         try(final DatagramSocket datagramSocket = new DatagramSocket()) {
             datagramSocket.connect(InetAddress.getByName("8.8.8.8"), 10002);
-            ipAddress = datagramSocket.getLocalAddress().getHostAddress();
+            serverIpAddress = datagramSocket.getLocalAddress().getHostAddress();
         } catch (SocketException e) {
             e.printStackTrace();
         } catch (UnknownHostException e) {
@@ -27,8 +33,12 @@ public class Config {
         }
     }
 
-    static public String getIpAddress() {
-        return ipAddress;
+    static public String getServerHostName() {
+        return serverHostName;
+    }
+
+    static public String getServerIpAddress() {
+        return serverIpAddress;
     }
 
     @Bean

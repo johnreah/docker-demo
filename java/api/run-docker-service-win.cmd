@@ -4,4 +4,5 @@ docker service create ^
     --replicas 1 ^
     --publish 8080:8080 ^
     --env ADMIN_SERVER_URL=http://admin:8093 ^
+    --hostname "{{.Service.Name}}-{{.Node.ID}}" ^
     demo/api

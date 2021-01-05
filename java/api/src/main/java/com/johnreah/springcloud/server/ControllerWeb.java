@@ -15,9 +15,10 @@ public class ControllerWeb {
 
     @GetMapping("/")
     public String getInfo(HttpServletRequest httpServletRequest, Model model) throws UnknownHostException, SocketException {
-        model.addAttribute("host", httpServletRequest.getLocalName());
-        model.addAttribute("ip", Config.getIpAddress());
-        model.addAttribute("port", httpServletRequest.getLocalPort());
+        model.addAttribute("serverHostName", Config.getServerHostName());
+        model.addAttribute("serverIpAddress", Config.getServerIpAddress());
+        model.addAttribute("requestHost", httpServletRequest.getLocalName());
+        model.addAttribute("requestPort", httpServletRequest.getLocalPort());
         return "index";
     }
 

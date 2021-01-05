@@ -9,8 +9,9 @@ import java.time.ZonedDateTime;
 @Builder
 public class Resource {
 
-    private String ipAddress;
-    private int port;
+    private String serverHostName;
+    private String serverIpAddress;
+    private int requestPort;
     private long requestNumber;
     private final ZonedDateTime resourceCreatedAt;
 

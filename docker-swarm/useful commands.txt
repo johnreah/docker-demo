@@ -1,0 +1,15 @@
+
+docker swarm init
+docker swarm join...
+
+docker network create --driver overlay demo-network
+
+docker service create --name admin --network demo-network --replicas 1 --publish 8093:8093 --hostname admin demo/admin-server
+docker service create ^
+    --name api ^
+    --network demo ^
+    --replicas 1 ^
+    --publish 8080:8080 ^
+    --env ADMIN_SERVER_URL=http://admin:8093 ^
+    --hostname "{{.Service.Name}}-{{.Node.ID}}" ^
+    demo/api
